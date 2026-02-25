@@ -1,0 +1,431 @@
+[Kerem (1).html](https://github.com/user-attachments/files/25542454/Kerem.1.html)
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sana Bir Hediyem Var 🎁</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0618;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    font-family: 'Playfair Display', serif;
+    touch-action: manipulation;
+  }
+
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #overlay-text {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .title {
+    margin-top: 5vh;
+    font-size: clamp(18px, 5vw, 28px);
+    color: #ffaad4;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    text-shadow: 0 0 20px #ff6b9d88, 0 0 40px #ff6b9d44;
+    letter-spacing: 1px;
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: clamp(12px, 3.5vw, 16px);
+    color: #cc88ff;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.7; transform: scale(1.04); }
+  }
+
+  .bouquet-title {
+    margin-top: 4vh;
+    font-size: clamp(22px, 6vw, 34px);
+    color: #ffb3d9;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    text-shadow: 0 0 24px #ff6b9daa, 0 0 50px #ff6b9d44;
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .bouquet-sub {
+    margin-top: 8px;
+    font-size: clamp(13px, 3.8vw, 19px);
+    color: #ffccff;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+  }
+
+  .bouquet-hint {
+    position: fixed;
+    bottom: 4vh;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: clamp(11px, 3vw, 14px);
+    color: #cc88ff;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    opacity: 0;
+    transition: opacity 0.8s ease 0.6s;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .show { opacity: 1 !important; transform: translateY(0) !important; }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="overlay-text">
+  <div class="title"   id="giftTitle">🎁&nbsp; Ebrar ♥ Kerem &nbsp;🎁</div>
+  <div class="subtitle" id="giftSub">Kutuya Dokun ✨</div>
+  <div class="bouquet-title" id="bouTitle">✨&nbsp; İyi ki Varsın &nbsp;✨</div>
+  <div class="bouquet-sub"   id="bouSub">🎀&nbsp; 2. Ayımız Kutlu Olsun &nbsp;🎀</div>
+</div>
+<div class="bouquet-hint" id="bouHint">Ekrana Dokun 💕</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+let W, H, CX, CY;
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  CX = W / 2; CY = H / 2;
+}
+resize();
+window.addEventListener('resize', () => { resize(); redrawStars(); });
+
+// ── Durum ────────────────────────────────────────────────────────────────────
+const STATE = { phase: 'gift', openStep: 0, clickCount: 0 };
+const hearts = [];
+const stars  = [];
+
+// ── Yıldızlar ────────────────────────────────────────────────────────────────
+function makeStars() {
+  stars.length = 0;
+  for (let i = 0; i < 100; i++) {
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.8 + 0.3,
+      col: ['#ffffff','#ffccee','#ccaaff','#aaddff'][Math.floor(Math.random()*4)],
+      twinkle: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.02 + 0.005
+    });
+  }
+}
+makeStars();
+
+function redrawStars() { makeStars(); }
+
+function drawStars(t) {
+  for (const s of stars) {
+    s.twinkle += s.speed;
+    const a = 0.4 + 0.6 * Math.abs(Math.sin(s.twinkle));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = s.col;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── Hediye Kutusu ─────────────────────────────────────────────────────────────
+function drawGiftBox(lidDy) {
+  const cx = CX, cy = CY + H * 0.05;
+  const bw = Math.min(W, H) * 0.26;
+  const bh = bw * 0.9;
+  const bx1 = cx - bw, by1 = cy - bh * 0.4, bx2 = cx + bw, by2 = cy + bh * 0.6;
+
+  // Gölge
+  ctx.fillStyle = '#55001a44';
+  ctx.fillRect(bx1+8, by2, (bx2-bx1), 10);
+
+  // Gövde
+  ctx.fillStyle = '#e8163c';
+  ctx.strokeStyle = '#ff6b9d';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.rect(bx1, by1, bx2-bx1, by2-by1); ctx.fill(); ctx.stroke();
+
+  // Şerit yatay
+  ctx.fillStyle = '#ffd700';
+  ctx.fillRect(bx1, cy - bh*0.08, bx2-bx1, bh*0.16);
+  // Şerit dikey
+  ctx.fillRect(cx - bw*0.12, by1, bw*0.24, by2-by1);
+
+  // Kapak
+  const lw = bw * 1.1;
+  const lh = bh * 0.22;
+  const lx1 = cx - lw, ly1 = cy - bh*0.55 + lidDy, lx2 = cx + lw, ly2 = ly1 + lh;
+  ctx.fillStyle = '#c0001a';
+  ctx.strokeStyle = '#ff6b9d';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.rect(lx1, ly1, lx2-lx1, ly2-ly1); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#ffd700';
+  ctx.fillRect(cx - bw*0.12, ly1, bw*0.24, lh);
+
+  // Fiyonk
+  const by = ly1 + 8;
+  const bsize = bw * 0.55;
+  ctx.fillStyle = '#ff6b9d';
+  ctx.beginPath();
+  ctx.ellipse(cx - bsize*0.5, by, bsize*0.52, bsize*0.28, -0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + bsize*0.5, by, bsize*0.52, bsize*0.28,  0.2, 0, Math.PI*2); ctx.fill();
+  // merkez
+  ctx.fillStyle = '#ffaad4';
+  ctx.strokeStyle = '#ff6b9d';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, by, bsize*0.18, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+}
+
+// ── Çiçek ─────────────────────────────────────────────────────────────────────
+function lerpColor(c1, c2, t) {
+  const r1=parseInt(c1.slice(1,3),16),g1=parseInt(c1.slice(3,5),16),b1=parseInt(c1.slice(5,7),16);
+  const r2=parseInt(c2.slice(1,3),16),g2=parseInt(c2.slice(3,5),16),b2=parseInt(c2.slice(5,7),16);
+  const r=Math.round(r1+(r2-r1)*t), g=Math.round(g1+(g2-g1)*t), b=Math.round(b1+(b2-b1)*t);
+  return `rgb(${r},${g},${b})`;
+}
+
+const FLOWER_COLORS = [
+  ['#ff6b9d','#ff1a6c'], ['#ffb347','#ff8c00'], ['#ff6ec7','#cc1177'],
+  ['#ffe066','#ffcc00'], ['#b388ff','#7c3aed'], ['#80deea','#00acc1'],
+  ['#f48fb1','#e91e63'],
+];
+
+function drawFlower(cx, cy, radius, c1, c2, petals, rotation) {
+  for (let i = 0; i < petals; i++) {
+    const a = rotation + (2 * Math.PI * i / petals);
+    const px = cx + radius * 1.4 * Math.cos(a);
+    const py = cy + radius * 1.4 * Math.sin(a);
+    const col = lerpColor(c1, c2, i / petals);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(px, py, radius * 0.85, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fffde7';
+  ctx.strokeStyle = '#ffd54f';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+}
+
+function drawLeaf(cx, cy, length, angle) {
+  const x2 = cx + length*Math.cos(angle);
+  const y2 = cy + length*Math.sin(angle);
+  const mx = (cx+x2)/2 + 15*Math.cos(angle+Math.PI/2);
+  const my = (cy+y2)/2 + 15*Math.sin(angle+Math.PI/2);
+  ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.quadraticCurveTo(mx,my,x2,y2); ctx.stroke();
+  ctx.strokeStyle = '#66bb6a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.quadraticCurveTo(mx,my,x2,y2); ctx.stroke();
+}
+
+// Çiçek pozisyonlarını önceden hesapla
+let bouquetFlowers = [];
+function buildBouquetData() {
+  bouquetFlowers = [];
+  const cx = CX, cy = CY + H * 0.06;
+  const scale = Math.min(W, H) / 700;
+  for (let i = 0; i < 22; i++) {
+    const t = i / 21;
+    const sa = t * 4.5 * Math.PI + Math.PI / 2;
+    const sr = (15 + t * 95) * scale;
+    const fx = cx + sr * Math.cos(sa);
+    const fy = cy - sr * 0.55 * Math.sin(sa);
+    const radius = (10 + (1 - Math.abs(t - 0.5) * 2) * 12) * scale;
+    const [c1, c2] = FLOWER_COLORS[i % FLOWER_COLORS.length];
+    const petals = [5,6,7,8][Math.floor(Math.random()*4)];
+    const rot = Math.random() * Math.PI;
+    const leaf = (i % 4 === 0) ? { angle: sa + Math.PI + (Math.random()*0.8-0.4), len: (22+radius) } : null;
+    bouquetFlowers.push({ fx, fy, radius, c1, c2, petals, rot, sa, leaf });
+  }
+  bouquetFlowers.sort((a,b) => b.radius - a.radius);
+}
+buildBouquetData();
+window.addEventListener('resize', buildBouquetData);
+
+function drawBouquet(alpha) {
+  ctx.globalAlpha = alpha;
+  const cx = CX, cy = CY + H * 0.06;
+  const scale = Math.min(W, H) / 700;
+
+  // Saplar
+  ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 7 * scale;
+  ctx.beginPath(); ctx.moveTo(cx - 18*scale, cy+60*scale); ctx.lineTo(cx - 10*scale, cy+160*scale); ctx.stroke();
+  ctx.lineWidth = 9 * scale;
+  ctx.beginPath(); ctx.moveTo(cx, cy+60*scale); ctx.lineTo(cx, cy+170*scale); ctx.stroke();
+  ctx.lineWidth = 7 * scale;
+  ctx.beginPath(); ctx.moveTo(cx + 18*scale, cy+60*scale); ctx.lineTo(cx + 10*scale, cy+160*scale); ctx.stroke();
+
+  // Kurdele
+  ctx.fillStyle = '#ff6b9d'; ctx.strokeStyle = '#e91e63'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 162*scale, 30*scale, 22*scale, 0, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#ff8fab';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 158*scale, 22*scale, 14*scale, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Yapraklar
+  for (const f of bouquetFlowers) {
+    if (f.leaf) drawLeaf(f.fx, f.fy, f.leaf.len, f.leaf.angle);
+  }
+
+  // Çiçekler
+  for (const f of bouquetFlowers) {
+    drawFlower(f.fx, f.fy, f.radius, f.c1, f.c2, f.petals, f.rot);
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+// ── Kalpler ───────────────────────────────────────────────────────────────────
+const HEART_COLS = ['#ff6b9d','#ff1a6c','#ff8fab','#ffb3c6','#ff4d88','#e91e63','#fc3574'];
+
+function heartPath(cx, cy, size) {
+  ctx.beginPath();
+  for (let i = 0; i <= 360; i++) {
+    const rad = i * Math.PI / 180;
+    const x = cx + size * (16 * Math.pow(Math.sin(rad), 3)) / 16;
+    const y = cy - size * (13*Math.cos(rad) - 5*Math.cos(2*rad) - 2*Math.cos(3*rad) - Math.cos(4*rad)) / 16;
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+}
+
+function spawnHearts(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    hearts.push({
+      x: x + (Math.random()-0.5)*160,
+      y: y + (Math.random()-0.5)*160,
+      vx: (Math.random()-0.5)*3,
+      vy: -(Math.random()*3+0.5),
+      size: Math.random()*14+8,
+      color: HEART_COLS[Math.floor(Math.random()*HEART_COLS.length)],
+      alpha: 1
+    });
+  }
+}
+
+function drawHearts() {
+  for (let i = hearts.length-1; i >= 0; i--) {
+    const h = hearts[i];
+    h.x += h.vx; h.y += h.vy; h.vy -= 0.04; h.alpha -= 0.008;
+    if (h.alpha <= 0) { hearts.splice(i,1); continue; }
+    ctx.globalAlpha = h.alpha;
+    ctx.fillStyle = h.color;
+    heartPath(h.x, h.y, h.size);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── Animasyon döngüsü ─────────────────────────────────────────────────────────
+let lidDy = 0;
+let bouquetAlpha = 0;
+let animating = false;
+
+function loop(t) {
+  requestAnimationFrame(loop);
+  ctx.clearRect(0,0,W,H);
+
+  // Arka plan
+  ctx.fillStyle = '#0d0618';
+  ctx.fillRect(0,0,W,H);
+  drawStars(t);
+
+  if (STATE.phase === 'gift') {
+    drawGiftBox(0);
+  } else if (STATE.phase === 'opening') {
+    // Buket arka planda belirmeye başlar
+    if (bouquetAlpha > 0) drawBouquet(bouquetAlpha);
+    drawGiftBox(lidDy);
+  } else if (STATE.phase === 'bouquet') {
+    drawBouquet(1);
+    drawHearts();
+  }
+}
+requestAnimationFrame(loop);
+
+// ── Açılma animasyonu ─────────────────────────────────────────────────────────
+function startOpen() {
+  if (animating) return;
+  animating = true;
+  STATE.phase = 'opening';
+
+  let step = 0;
+  function tick() {
+    if (step <= 22) {
+      lidDy = -(step * H * 0.016);
+      if (step >= 6) bouquetAlpha = Math.min(1, (step-6)/10);
+      step++;
+      setTimeout(tick, 40);
+    } else {
+      // Animasyon bitti
+      STATE.phase = 'bouquet';
+      bouquetAlpha = 1;
+      // Kutu yazılarını gizle, buket yazılarını göster
+      document.getElementById('giftTitle').style.display = 'none';
+      document.getElementById('giftSub').style.display   = 'none';
+      document.getElementById('bouTitle').classList.add('show');
+      document.getElementById('bouSub').classList.add('show');
+      document.getElementById('bouHint').classList.add('show');
+    }
+  }
+  tick();
+}
+
+// ── Tıklama / Dokunma ─────────────────────────────────────────────────────────
+function getPos(e) {
+  if (e.touches && e.touches[0]) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+function handleInteraction(e) {
+  const { x, y } = getPos(e);
+  if (STATE.phase === 'gift') {
+    startOpen();
+  } else if (STATE.phase === 'bouquet') {
+    STATE.clickCount++;
+    const count = Math.min(3 + STATE.clickCount * 2, 22);
+    spawnHearts(x, y, count);
+  }
+}
+
+canvas.addEventListener('click',      handleInteraction);
+canvas.addEventListener('touchstart', handleInteraction, { passive: true });
+</script>
+</body>
+</html>
